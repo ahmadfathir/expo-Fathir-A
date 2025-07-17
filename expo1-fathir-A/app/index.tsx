@@ -35,13 +35,16 @@ const imagesAlt = [
   require('../assets/images/18.jpeg'),
 ];
 
-// Validasi awal
+// Validasi jumlah gambar & peringatan jika ada duplikat
+const isUnique = arr => new Set(arr).size === arr.length;
 if (imagesMain.length !== 9 || imagesAlt.length !== 9) {
   Alert.alert(
     "Error",
     "Jumlah gambar utama dan alternatif harus tepat 9.",
     [{ text: "OK" }]
   );
+} else if (!isUnique(imagesMain) || !isUnique(imagesAlt)) {
+  console.warn('Ada gambar yang duplikat pada imagesMain atau imagesAlt');
 }
 
 type ImgCellState = {
@@ -59,19 +62,19 @@ export default function App() {
     }))
   );
 
-  // Handler klik, logika lengkap
+  // Lengkap: scaling bertahap, auto-alt di 2x, reset di klik selanjutnya
   const handleImagePress = (idx: number) => {
     setImageStates(prev =>
       prev.map((item, i) => {
         if (i !== idx) return item;
 
-        // Jika sedang alternatif dan scale = 2, klik => reset ke awal
+        // Jika sudah alternatif dan scale 2, reset ke awal
         if (item.isAlt && item.scale === 2) {
           Animated.spring(item.scaleAnim, { toValue: 1, useNativeDriver: true }).start();
           return { ...item, scale: 1, isAlt: false };
         }
 
-        // Jika belum scale 2, naikkan 0.2, maksimal 2
+        // Kalau belum 2x, naikkan 0.2, maksimal 2
         let nextScale = +(item.scale + 0.2).toFixed(2);
         if (nextScale > 2) nextScale = 2;
 
@@ -96,7 +99,7 @@ export default function App() {
                 styles.cell,
                 {
                   width: CELL_SIZE,
-                  aspectRatio: 1,
+                  aspectRatio: 1, // Jaminan sel square simetris
                 },
               ]}
               activeOpacity={0.85}
