@@ -1,7 +1,7 @@
-//NAMA : AHMAD FATHIR
-//NIM  : 105841102922
-//KELAS: 6A
-//TUGAS2 LAB AKB
+// NAMA : AHMAD FATHIR
+// NIM  : 105841102922
+// KELAS: 6A
+// TUGAS2 LAB AKB
 
 import React from 'react';
 import { StyleSheet, View, TouchableOpacity, Animated, Dimensions, ScrollView } from 'react-native';
@@ -48,17 +48,34 @@ export default function App() {
     setImageStates(prevStates => {
       const newStates = prevStates.map((item, i) => {
         if (i === index) {
-          let newScale = +(item.scale + 0.2).toFixed(2);
-          let newIsAlt = item.isAlt;
-          if (newScale > 2) {
-            newScale = 1;
-            newIsAlt = !item.isAlt;
+          // Jika masih gambar utama dan scale < 2
+          if (!item.isAlt && item.scale < 2) {
+            let newScale = +(item.scale + 0.2).toFixed(2);
+            if (newScale >= 2) {
+              // Jika sudah mencapai/melampaui 2, set ke 2 dan ganti ke alternatif
+              Animated.spring(item.scaleAnim, {
+                toValue: 2,
+                useNativeDriver: true,
+              }).start();
+              return { ...item, isAlt: true, scale: 2 };
+            } else {
+              // Jika belum, lanjut naikkan skala
+              Animated.spring(item.scaleAnim, {
+                toValue: newScale,
+                useNativeDriver: true,
+              }).start();
+              return { ...item, scale: newScale };
+            }
           }
-          Animated.spring(item.scaleAnim, {
-            toValue: newScale,
-            useNativeDriver: true,
-          }).start();
-          return { ...item, scale: newScale, isAlt: newIsAlt };
+          // Jika sudah alternatif dan scale == 2, reset ke utama dan skala 1
+          else if (item.isAlt && item.scale === 2) {
+            Animated.spring(item.scaleAnim, {
+              toValue: 1,
+              useNativeDriver: true,
+            }).start();
+            return { ...item, isAlt: false, scale: 1 };
+          }
+          // Jika ada edge case lain, default tidak berubah
         }
         return item;
       });
