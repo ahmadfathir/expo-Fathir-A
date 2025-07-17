@@ -35,26 +35,22 @@ const imagesAlt = [
   require('../assets/images/18.jpeg'),
 ];
 
-// Validasi jumlah & keunikan gambar
+// Validasi: jumlah & keunikan
 const isUnique = arr => new Set(arr).size === arr.length;
 if (imagesMain.length !== 9 || imagesAlt.length !== 9) {
-  Alert.alert(
-    "Error",
-    "Jumlah gambar utama dan alternatif harus tepat 9.",
-    [{ text: "OK" }]
-  );
+  Alert.alert("Error", "Jumlah gambar utama dan alternatif harus tepat 9.");
 } else if (!isUnique(imagesMain) || !isUnique(imagesAlt)) {
-  console.warn('Ada gambar yang duplikat pada imagesMain atau imagesAlt');
+  console.warn('Ada gambar yang duplikat di imagesMain atau imagesAlt');
 }
 
-type ImgCellState = {
+type ImgState = {
   scale: number;
   isAlt: boolean;
   scaleAnim: Animated.Value;
 };
 
 export default function App() {
-  const [imageStates, setImageStates] = React.useState<ImgCellState[]>(
+  const [imageStates, setImageStates] = React.useState<ImgState[]>(
     Array(9).fill(0).map(() => ({
       scale: 1,
       isAlt: false,
@@ -62,56 +58,45 @@ export default function App() {
     }))
   );
 
-  // Fungsi scaling, alt, dan reset – INDIVIDUAL per cell
-  const handleImagePress = (idx: number) => {
+  // ✅ handleImagePress lengkap
+  const handleImagePress = (index: number) => {
     setImageStates(prev =>
       prev.map((item, i) => {
-        if (i !== idx) return item;
+        if (i !== index) return item;
 
-        // RESET: Jika sudah alternatif dan scale 2, klik reset ke awal
+        // Jika sedang alternatif dan sudah 2x, reset
         if (item.isAlt && item.scale === 2) {
           Animated.spring(item.scaleAnim, { toValue: 1, useNativeDriver: true }).start();
           return { ...item, scale: 1, isAlt: false };
         }
 
-        // Jika belum 2x, naikkan 0.2 step, maksimal 2
+        // Tambah skala 0.2, maksimal 2
         let nextScale = +(item.scale + 0.2).toFixed(2);
         if (nextScale > 2) nextScale = 2;
 
-        // Begitu tepat 2, otomatis ganti gambar alternatif
-        let nextIsAlt = item.isAlt;
-        if (!item.isAlt && nextScale === 2) nextIsAlt = true;
+        // Jika mencapai 2x, ganti ke alternatif
+        const nextIsAlt = nextScale === 2 ? true : item.isAlt;
 
         Animated.spring(item.scaleAnim, { toValue: nextScale, useNativeDriver: true }).start();
+
         return { ...item, scale: nextScale, isAlt: nextIsAlt };
       })
     );
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+    <ScrollView contentContainerStyle={styles.scrollContainer}>
       <View style={styles.container}>
-        {/* GRID 3x3 — semua sel identik */}
         <View style={[styles.grid, { width: GRID_WIDTH, height: GRID_WIDTH }]}>
           {imageStates.map((state, idx) => (
             <TouchableOpacity
               key={idx}
-              style={[
-                styles.cell,
-                {
-                  width: CELL_SIZE,
-                  aspectRatio: 1, // 1:1, square, jaminan visual semua sel sama
-                },
-              ]}
-              activeOpacity={0.85}
+              style={[styles.cell, { width: CELL_SIZE, aspectRatio: 1 }]}
               onPress={() => handleImagePress(idx)}
+              activeOpacity={0.8}
             >
               <Animated.Image
-                source={
-                  imagesMain.length === 9 && imagesAlt.length === 9
-                    ? (state.isAlt ? imagesAlt[idx] : imagesMain[idx])
-                    : require('../assets/images/placeholder.png')
-                }
+                source={state.isAlt ? imagesAlt[idx] : imagesMain[idx]}
                 style={[
                   styles.image,
                   {
@@ -128,7 +113,7 @@ export default function App() {
   );
 }
 
-// STYLE — grid & cell 100% simetris
+// ✅ Semua sel dijamin square & konsisten
 const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
@@ -136,7 +121,6 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#f0f0f0',
     paddingVertical: 20,
@@ -147,21 +131,20 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 12,
     overflow: 'hidden',
-    marginBottom: 20,
     alignContent: 'flex-start',
   },
   cell: {
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
     borderColor: '#e0e0e0',
-    overflow: 'hidden',
+    borderWidth: 1,
     borderRadius: 10,
     backgroundColor: '#fff',
+    overflow: 'hidden',
   },
   image: {
     width: '100%',
     height: '100%',
     borderRadius: 10,
-  }
+  },
 });
