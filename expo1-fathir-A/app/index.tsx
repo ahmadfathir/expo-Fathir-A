@@ -35,77 +35,64 @@ const imagesAlt = [
   require('../assets/images/18.jpeg'),
 ];
 
+type ImgState = {
+  scale: number,
+  isAlt: boolean,
+  scaleAnim: Animated.Value,
+};
+
 export default function App() {
-  // State: tiap gambar menyimpan scale (number), scaleAnim (Animated.Value), dan isAlt (boolean)
-  const [imageStates, setImageStates] = React.useState(
+  // Setiap gambar memiliki state: scale, isAlt, dan scaleAnim (Animated.Value)
+  const [imageStates, setImageStates] = React.useState<ImgState[]>(
     Array(9).fill(0).map(() => ({
       scale: 1,
-      scaleAnim: new Animated.Value(1),
       isAlt: false,
+      scaleAnim: new Animated.Value(1),
     }))
   );
 
-  const handleImagePress = (index: number) => {
-    setImageStates(prevStates => {
-      return prevStates.map((state, i) => {
-        if (i !== index) return state;
+  // Handler individu
+  const handleImagePress = (idx: number) => {
+    setImageStates(prev =>
+      prev.map((item, i) => {
+        if (i !== idx) return item;
 
-        // Kasus 1: Masih di bawah 2x, naikkan scale +0.2 (maksimal 2.0)
-        if (state.scale < 2) {
-          let nextScale = +(state.scale + 0.2).toFixed(2);
-          // Batas maksimum 2.0
-          if (nextScale > 2) nextScale = 2;
-          // Ganti ke gambar alternatif jika sudah tepat 2.0
-          const toAlt = nextScale === 2;
-          Animated.spring(state.scaleAnim, {
-            toValue: nextScale,
-            useNativeDriver: true,
-          }).start();
-          return {
-            ...state,
-            scale: nextScale,
-            isAlt: toAlt ? true : state.isAlt,
-          };
+        // Jika gambar sedang alternatif dan scale 2, klik: reset ke 1 dan kembali ke utama
+        if (item.isAlt && item.scale === 2) {
+          Animated.spring(item.scaleAnim, { toValue: 1, useNativeDriver: true }).start();
+          return { ...item, scale: 1, isAlt: false };
         }
 
-        // Kasus 2: Sudah di 2x, klik lagi reset ke 1 dan kembali ke gambar utama
-        Animated.spring(state.scaleAnim, {
-          toValue: 1,
-          useNativeDriver: true,
-        }).start();
-        return {
-          ...state,
-          scale: 1,
-          isAlt: false,
-        };
-      });
-    });
+        // Jika scale < 2, naikkan +0.2 (maksimal 2)
+        let nextScale = +(item.scale + 0.2).toFixed(2);
+        if (nextScale > 2) nextScale = 2;
+
+        // Begitu tepat 2, ganti ke alternatif
+        const toAlt = nextScale === 2 ? true : item.isAlt;
+
+        Animated.spring(item.scaleAnim, { toValue: nextScale, useNativeDriver: true }).start();
+
+        return { ...item, scale: nextScale, isAlt: toAlt };
+      })
+    );
   };
 
   return (
-    <ScrollView
-      contentContainerStyle={styles.scrollContainer}
-      showsVerticalScrollIndicator={false}
-    >
+    <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
       <View style={styles.container}>
         <View style={[styles.grid, { width: GRID_WIDTH }]}>
-          {imageStates.map((state, index) => (
+          {imageStates.map((state, idx) => (
             <TouchableOpacity
-              key={index}
-              style={[
-                styles.cell,
-                { width: CELL_SIZE, height: CELL_SIZE }
-              ]}
+              key={idx}
+              style={[styles.cell, { width: CELL_SIZE, height: CELL_SIZE }]}
               activeOpacity={0.7}
-              onPress={() => handleImagePress(index)}
+              onPress={() => handleImagePress(idx)}
             >
               <Animated.Image
-                source={state.isAlt ? imagesAlt[index] : imagesMain[index]}
+                source={state.isAlt ? imagesAlt[idx] : imagesMain[idx]}
                 style={[
                   styles.image,
-                  {
-                    transform: [{ scale: state.scaleAnim }]
-                  }
+                  { transform: [{ scale: state.scaleAnim }] }
                 ]}
                 resizeMode="cover"
               />
