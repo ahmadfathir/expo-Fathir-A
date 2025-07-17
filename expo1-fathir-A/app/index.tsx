@@ -9,7 +9,7 @@ import { StyleSheet, View, TouchableOpacity, Animated, Dimensions, ScrollView } 
 const { width } = Dimensions.get('window');
 const GRID_SIZE = 3;
 const GRID_WIDTH = width * 0.9;
-const CELL_SIZE = GRID_WIDTH / GRID_SIZE;
+const CELL_SIZE = Math.floor(GRID_WIDTH / GRID_SIZE); // pembulatan biar semua kotak presisi
 
 const imagesMain = [
   require('../assets/images/1.jpeg'),
@@ -35,64 +35,78 @@ const imagesAlt = [
   require('../assets/images/18.jpeg'),
 ];
 
-type ImgState = {
-  scale: number,
-  isAlt: boolean,
-  scaleAnim: Animated.Value,
+// Tipe state per gambar
+type ImageCellState = {
+  scale: number;
+  isAlt: boolean;
+  scaleAnim: Animated.Value;
 };
 
 export default function App() {
-  // Setiap gambar memiliki state: scale, isAlt, dan scaleAnim (Animated.Value)
-  const [imageStates, setImageStates] = React.useState<ImgState[]>(
-    Array(9).fill(0).map(() => ({
-      scale: 1,
-      isAlt: false,
-      scaleAnim: new Animated.Value(1),
-    }))
+  // State per gambar, disimpan di array
+  const [imageStates, setImageStates] = React.useState<ImageCellState[]>(
+    Array(9)
+      .fill(0)
+      .map(() => ({
+        scale: 1,
+        isAlt: false,
+        scaleAnim: new Animated.Value(1),
+      }))
   );
 
-  // Handler individu
+  // Handler klik pada cell
   const handleImagePress = (idx: number) => {
-    setImageStates(prev =>
-      prev.map((item, i) => {
+    setImageStates(prevStates =>
+      prevStates.map((item, i) => {
         if (i !== idx) return item;
 
-        // Jika gambar sedang alternatif dan scale 2, klik: reset ke 1 dan kembali ke utama
+        // LOGIKA SKALING & RESET:
+        // Jika sudah di scale 2x dan gambar alternatif, klik = reset ke 1x dan gambar utama
         if (item.isAlt && item.scale === 2) {
           Animated.spring(item.scaleAnim, { toValue: 1, useNativeDriver: true }).start();
           return { ...item, scale: 1, isAlt: false };
         }
 
-        // Jika scale < 2, naikkan +0.2 (maksimal 2)
+        // Kalau belum 2x, naikkan 0.2 step, maksimal 2
         let nextScale = +(item.scale + 0.2).toFixed(2);
         if (nextScale > 2) nextScale = 2;
 
-        // Begitu tepat 2, ganti ke alternatif
-        const toAlt = nextScale === 2 ? true : item.isAlt;
+        // Jika mencapai 2x, otomatis ganti gambar alternatif
+        let nextIsAlt = item.isAlt;
+        if (!item.isAlt && nextScale === 2) nextIsAlt = true;
 
         Animated.spring(item.scaleAnim, { toValue: nextScale, useNativeDriver: true }).start();
-
-        return { ...item, scale: nextScale, isAlt: toAlt };
+        return { ...item, scale: nextScale, isAlt: nextIsAlt };
       })
     );
   };
 
+  // Untuk memastikan grid rapih dan semua sel sama, gunakan flexBasis untuk setiap cell
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
       <View style={styles.container}>
-        <View style={[styles.grid, { width: GRID_WIDTH }]}>
+        <View style={[styles.grid, { width: GRID_WIDTH, height: GRID_WIDTH }]}>
           {imageStates.map((state, idx) => (
             <TouchableOpacity
               key={idx}
-              style={[styles.cell, { width: CELL_SIZE, height: CELL_SIZE }]}
-              activeOpacity={0.7}
+              style={[
+                styles.cell,
+                {
+                  width: CELL_SIZE,
+                  height: CELL_SIZE,
+                  flexBasis: CELL_SIZE,
+                },
+              ]}
+              activeOpacity={0.8}
               onPress={() => handleImagePress(idx)}
             >
               <Animated.Image
                 source={state.isAlt ? imagesAlt[idx] : imagesMain[idx]}
                 style={[
                   styles.image,
-                  { transform: [{ scale: state.scaleAnim }] }
+                  {
+                    transform: [{ scale: state.scaleAnim }],
+                  },
                 ]}
                 resizeMode="cover"
               />
@@ -120,7 +134,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     backgroundColor: '#fff',
-    borderRadius: 10,
+    borderRadius: 12,
     overflow: 'hidden',
     marginBottom: 20,
   },
@@ -137,5 +151,5 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     borderRadius: 10,
-  }
+  },
 });
