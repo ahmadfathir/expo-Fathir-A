@@ -35,7 +35,7 @@ const imagesAlt = [
   require('../assets/images/18.jpeg'),
 ];
 
-// Validasi jumlah gambar di awal, agar tidak crash
+// Validasi awal
 if (imagesMain.length !== 9 || imagesAlt.length !== 9) {
   Alert.alert(
     "Error",
@@ -51,7 +51,6 @@ type ImgCellState = {
 };
 
 export default function App() {
-  // Setiap cell punya: scale, scaleAnim, isAlt
   const [imageStates, setImageStates] = React.useState<ImgCellState[]>(
     Array(9).fill(0).map(() => ({
       scale: 1,
@@ -60,22 +59,26 @@ export default function App() {
     }))
   );
 
-  // Fungsi handle klik per cell
+  // Handler klik, logika lengkap
   const handleImagePress = (idx: number) => {
     setImageStates(prev =>
       prev.map((item, i) => {
         if (i !== idx) return item;
-        // Jika sudah alternatif & scale 2, klik = reset ke utama & scale 1
+
+        // Jika sedang alternatif dan scale = 2, klik => reset ke awal
         if (item.isAlt && item.scale === 2) {
           Animated.spring(item.scaleAnim, { toValue: 1, useNativeDriver: true }).start();
           return { ...item, scale: 1, isAlt: false };
         }
-        // Kalau belum 2x, naikkan 0.2 step, maksimal 2
+
+        // Jika belum scale 2, naikkan 0.2, maksimal 2
         let nextScale = +(item.scale + 0.2).toFixed(2);
         if (nextScale > 2) nextScale = 2;
-        // Jika mencapai 2x, otomatis ganti gambar alternatif
+
+        // Begitu tepat 2, otomatis isAlt true
         let nextIsAlt = item.isAlt;
         if (!item.isAlt && nextScale === 2) nextIsAlt = true;
+
         Animated.spring(item.scaleAnim, { toValue: nextScale, useNativeDriver: true }).start();
         return { ...item, scale: nextScale, isAlt: nextIsAlt };
       })
@@ -93,7 +96,7 @@ export default function App() {
                 styles.cell,
                 {
                   width: CELL_SIZE,
-                  aspectRatio: 1, // square, fix ratio
+                  aspectRatio: 1,
                 },
               ]}
               activeOpacity={0.85}
@@ -103,7 +106,7 @@ export default function App() {
                 source={
                   imagesMain.length === 9 && imagesAlt.length === 9
                     ? (state.isAlt ? imagesAlt[idx] : imagesMain[idx])
-                    : require('../assets/images/placeholder.png') // fallback
+                    : require('../assets/images/placeholder.png')
                 }
                 style={[
                   styles.image,
