@@ -4,12 +4,12 @@
 // TUGAS2 LAB AKB
 
 import React from 'react';
-import { StyleSheet, View, TouchableOpacity, Animated, Dimensions, ScrollView } from 'react-native';
+import { StyleSheet, View, TouchableOpacity, Animated, Dimensions, ScrollView, Alert } from 'react-native';
 
 const { width } = Dimensions.get('window');
 const GRID_SIZE = 3;
 const GRID_WIDTH = width * 0.9;
-const CELL_SIZE = Math.floor(GRID_WIDTH / GRID_SIZE); // pembulatan biar semua kotak presisi
+const CELL_SIZE = Math.floor(GRID_WIDTH / GRID_SIZE);
 
 const imagesMain = [
   require('../assets/images/1.jpeg'),
@@ -35,53 +35,53 @@ const imagesAlt = [
   require('../assets/images/18.jpeg'),
 ];
 
-// Tipe state per gambar
-type ImageCellState = {
+// Validasi jumlah gambar di awal, agar tidak crash
+if (imagesMain.length !== 9 || imagesAlt.length !== 9) {
+  Alert.alert(
+    "Error",
+    "Jumlah gambar utama dan alternatif harus tepat 9.",
+    [{ text: "OK" }]
+  );
+}
+
+type ImgCellState = {
   scale: number;
   isAlt: boolean;
   scaleAnim: Animated.Value;
 };
 
 export default function App() {
-  // State per gambar, disimpan di array
-  const [imageStates, setImageStates] = React.useState<ImageCellState[]>(
-    Array(9)
-      .fill(0)
-      .map(() => ({
-        scale: 1,
-        isAlt: false,
-        scaleAnim: new Animated.Value(1),
-      }))
+  // Setiap cell punya: scale, scaleAnim, isAlt
+  const [imageStates, setImageStates] = React.useState<ImgCellState[]>(
+    Array(9).fill(0).map(() => ({
+      scale: 1,
+      isAlt: false,
+      scaleAnim: new Animated.Value(1),
+    }))
   );
 
-  // Handler klik pada cell
+  // Fungsi handle klik per cell
   const handleImagePress = (idx: number) => {
-    setImageStates(prevStates =>
-      prevStates.map((item, i) => {
+    setImageStates(prev =>
+      prev.map((item, i) => {
         if (i !== idx) return item;
-
-        // LOGIKA SKALING & RESET:
-        // Jika sudah di scale 2x dan gambar alternatif, klik = reset ke 1x dan gambar utama
+        // Jika sudah alternatif & scale 2, klik = reset ke utama & scale 1
         if (item.isAlt && item.scale === 2) {
           Animated.spring(item.scaleAnim, { toValue: 1, useNativeDriver: true }).start();
           return { ...item, scale: 1, isAlt: false };
         }
-
         // Kalau belum 2x, naikkan 0.2 step, maksimal 2
         let nextScale = +(item.scale + 0.2).toFixed(2);
         if (nextScale > 2) nextScale = 2;
-
         // Jika mencapai 2x, otomatis ganti gambar alternatif
         let nextIsAlt = item.isAlt;
         if (!item.isAlt && nextScale === 2) nextIsAlt = true;
-
         Animated.spring(item.scaleAnim, { toValue: nextScale, useNativeDriver: true }).start();
         return { ...item, scale: nextScale, isAlt: nextIsAlt };
       })
     );
   };
 
-  // Untuk memastikan grid rapih dan semua sel sama, gunakan flexBasis untuk setiap cell
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
       <View style={styles.container}>
@@ -93,20 +93,23 @@ export default function App() {
                 styles.cell,
                 {
                   width: CELL_SIZE,
-                  height: CELL_SIZE,
-                  flexBasis: CELL_SIZE,
+                  aspectRatio: 1, // square, fix ratio
                 },
               ]}
-              activeOpacity={0.8}
+              activeOpacity={0.85}
               onPress={() => handleImagePress(idx)}
             >
               <Animated.Image
-                source={state.isAlt ? imagesAlt[idx] : imagesMain[idx]}
+                source={
+                  imagesMain.length === 9 && imagesAlt.length === 9
+                    ? (state.isAlt ? imagesAlt[idx] : imagesMain[idx])
+                    : require('../assets/images/placeholder.png') // fallback
+                }
                 style={[
                   styles.image,
                   {
-                    transform: [{ scale: state.scaleAnim }],
-                  },
+                    transform: [{ scale: state.scaleAnim }]
+                  }
                 ]}
                 resizeMode="cover"
               />
@@ -137,6 +140,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: 'hidden',
     marginBottom: 20,
+    alignContent: 'flex-start',
   },
   cell: {
     justifyContent: 'center',
@@ -151,5 +155,5 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     borderRadius: 10,
-  },
+  }
 });
