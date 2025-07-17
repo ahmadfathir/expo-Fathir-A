@@ -4,7 +4,15 @@
 // TUGAS2 LAB AKB
 
 import React from 'react';
-import { StyleSheet, View, TouchableOpacity, Animated, Dimensions, ScrollView, Text } from 'react-native';
+import {
+  StyleSheet,
+  View,
+  TouchableOpacity,
+  Animated,
+  Dimensions,
+  ScrollView,
+  Text,
+} from 'react-native';
 
 const { width } = Dimensions.get('window');
 const GRID_SIZE = 3;
@@ -35,7 +43,8 @@ const imagesAlt = [
   require('../assets/images/18.jpeg'),
 ];
 
-const isValidImageArray = (arr: any[]) => Array.isArray(arr) && arr.length === 9 && new Set(arr).size === 9;
+const isValidImageArray = (arr: any[]) =>
+  Array.isArray(arr) && arr.length === 9 && new Set(arr).size === 9;
 
 type ImgCellState = {
   scale: number;
@@ -45,11 +54,13 @@ type ImgCellState = {
 
 export default function App() {
   const [imageStates, setImageStates] = React.useState<ImgCellState[]>(
-    Array(9).fill(null).map(() => ({
-      scale: 1,
-      isAlt: false,
-      scaleAnim: new Animated.Value(1),
-    }))
+    Array(9)
+      .fill(null)
+      .map(() => ({
+        scale: 1,
+        isAlt: false,
+        scaleAnim: new Animated.Value(1),
+      }))
   );
 
   const handleImagePress = (index: number) => {
@@ -57,19 +68,22 @@ export default function App() {
       prev.map((state, i) => {
         if (i !== index) return state;
 
-        // Reset jika sudah alternatif dan scale 2
+        // Jika sudah alternatif dan skala = 2, reset
         if (state.isAlt && state.scale === 2) {
           Animated.spring(state.scaleAnim, { toValue: 1, useNativeDriver: true }).start();
           return { ...state, scale: 1, isAlt: false };
         }
 
-        // Tingkatkan scale per klik hingga 2
+        // Tambah skala hingga maksimal 2.0
         let nextScale = +(state.scale + 0.2).toFixed(1);
         if (nextScale > 2) nextScale = 2;
 
         const nextIsAlt = nextScale === 2 ? true : state.isAlt;
 
-        Animated.spring(state.scaleAnim, { toValue: nextScale, useNativeDriver: true }).start();
+        Animated.spring(state.scaleAnim, {
+          toValue: nextScale,
+          useNativeDriver: true,
+        }).start();
 
         return {
           ...state,
@@ -98,7 +112,9 @@ export default function App() {
                   source={state.isAlt ? imagesAlt[index] : imagesMain[index]}
                   style={[
                     styles.image,
-                    { transform: [{ scale: state.scaleAnim }] },
+                    {
+                      transform: [{ scale: state.scaleAnim }],
+                    },
                   ]}
                   resizeMode="cover"
                 />
@@ -107,7 +123,7 @@ export default function App() {
           </View>
         ) : (
           <Text style={styles.errorText}>
-            Gambar tidak valid: pastikan terdapat 9 gambar utama dan 9 alternatif yang unik.
+            Gambar tidak valid: Pastikan ada 9 gambar utama & 9 alternatif yang unik.
           </Text>
         )}
       </View>
@@ -129,8 +145,8 @@ const styles = StyleSheet.create({
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    borderRadius: 12,
     backgroundColor: '#fff',
+    borderRadius: 12,
     overflow: 'hidden',
   },
   cell: {
