@@ -36,55 +36,54 @@ const imagesAlt = [
 ];
 
 export default function App() {
+  // State: tiap gambar menyimpan scale (number), scaleAnim (Animated.Value), dan isAlt (boolean)
   const [imageStates, setImageStates] = React.useState(
-    Array(9).fill(null).map(() => ({
-      isAlt: false,
+    Array(9).fill(0).map(() => ({
       scale: 1,
       scaleAnim: new Animated.Value(1),
+      isAlt: false,
     }))
   );
 
   const handleImagePress = (index: number) => {
     setImageStates(prevStates => {
-      const newStates = prevStates.map((item, i) => {
-        if (i === index) {
-          // Jika masih gambar utama dan scale < 2
-          if (!item.isAlt && item.scale < 2) {
-            let newScale = +(item.scale + 0.2).toFixed(2);
-            if (newScale >= 2) {
-              // Jika sudah mencapai/melampaui 2, set ke 2 dan ganti ke alternatif
-              Animated.spring(item.scaleAnim, {
-                toValue: 2,
-                useNativeDriver: true,
-              }).start();
-              return { ...item, isAlt: true, scale: 2 };
-            } else {
-              // Jika belum, lanjut naikkan skala
-              Animated.spring(item.scaleAnim, {
-                toValue: newScale,
-                useNativeDriver: true,
-              }).start();
-              return { ...item, scale: newScale };
-            }
-          }
-          // Jika sudah alternatif dan scale == 2, reset ke utama dan skala 1
-          else if (item.isAlt && item.scale === 2) {
-            Animated.spring(item.scaleAnim, {
-              toValue: 1,
-              useNativeDriver: true,
-            }).start();
-            return { ...item, isAlt: false, scale: 1 };
-          }
-          // Jika ada edge case lain, default tidak berubah
+      return prevStates.map((state, i) => {
+        if (i !== index) return state;
+
+        // Kasus 1: Masih di bawah 2x, naikkan scale +0.2 (maksimal 2.0)
+        if (state.scale < 2) {
+          let nextScale = +(state.scale + 0.2).toFixed(2);
+          // Batas maksimum 2.0
+          if (nextScale > 2) nextScale = 2;
+          // Ganti ke gambar alternatif jika sudah tepat 2.0
+          const toAlt = nextScale === 2;
+          Animated.spring(state.scaleAnim, {
+            toValue: nextScale,
+            useNativeDriver: true,
+          }).start();
+          return {
+            ...state,
+            scale: nextScale,
+            isAlt: toAlt ? true : state.isAlt,
+          };
         }
-        return item;
+
+        // Kasus 2: Sudah di 2x, klik lagi reset ke 1 dan kembali ke gambar utama
+        Animated.spring(state.scaleAnim, {
+          toValue: 1,
+          useNativeDriver: true,
+        }).start();
+        return {
+          ...state,
+          scale: 1,
+          isAlt: false,
+        };
       });
-      return newStates;
     });
   };
 
   return (
-    <ScrollView 
+    <ScrollView
       contentContainerStyle={styles.scrollContainer}
       showsVerticalScrollIndicator={false}
     >
