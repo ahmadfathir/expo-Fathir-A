@@ -35,7 +35,7 @@ const imagesAlt = [
   require('../assets/images/18.jpeg'),
 ];
 
-// Validasi jumlah gambar & peringatan jika ada duplikat
+// Validasi jumlah gambar & peringatan duplikat
 const isUnique = arr => new Set(arr).size === arr.length;
 if (imagesMain.length !== 9 || imagesAlt.length !== 9) {
   Alert.alert(
@@ -54,6 +54,7 @@ type ImgCellState = {
 };
 
 export default function App() {
+  // Satu state array berisi state untuk setiap cell
   const [imageStates, setImageStates] = React.useState<ImgCellState[]>(
     Array(9).fill(0).map(() => ({
       scale: 1,
@@ -62,19 +63,19 @@ export default function App() {
     }))
   );
 
-  // Lengkap: scaling bertahap, auto-alt di 2x, reset di klik selanjutnya
+  // Handler scaling per cell, lengkap!
   const handleImagePress = (idx: number) => {
     setImageStates(prev =>
       prev.map((item, i) => {
         if (i !== idx) return item;
 
-        // Jika sudah alternatif dan scale 2, reset ke awal
+        // Jika sudah alternatif & scale=2, klik=reset ke utama & scale=1
         if (item.isAlt && item.scale === 2) {
           Animated.spring(item.scaleAnim, { toValue: 1, useNativeDriver: true }).start();
           return { ...item, scale: 1, isAlt: false };
         }
 
-        // Kalau belum 2x, naikkan 0.2, maksimal 2
+        // Kalau belum 2x, naikkan 0.2 step, maksimal 2
         let nextScale = +(item.scale + 0.2).toFixed(2);
         if (nextScale > 2) nextScale = 2;
 
@@ -91,6 +92,7 @@ export default function App() {
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
       <View style={styles.container}>
+        {/* GRID 3x3 benar-benar square, semua sel sama */}
         <View style={[styles.grid, { width: GRID_WIDTH, height: GRID_WIDTH }]}>
           {imageStates.map((state, idx) => (
             <TouchableOpacity
@@ -99,7 +101,7 @@ export default function App() {
                 styles.cell,
                 {
                   width: CELL_SIZE,
-                  aspectRatio: 1, // Jaminan sel square simetris
+                  aspectRatio: 1,
                 },
               ]}
               activeOpacity={0.85}
