@@ -4,7 +4,7 @@
 // TUGAS2 LAB AKB
 
 import React from 'react';
-import { StyleSheet, View, TouchableOpacity, Animated, Dimensions, ScrollView, Alert } from 'react-native';
+import { StyleSheet, View, TouchableOpacity, Animated, Dimensions, ScrollView, Text } from 'react-native';
 
 const { width } = Dimensions.get('window');
 const GRID_SIZE = 3;
@@ -35,85 +35,86 @@ const imagesAlt = [
   require('../assets/images/18.jpeg'),
 ];
 
-// Validasi: jumlah & keunikan
-const isUnique = arr => new Set(arr).size === arr.length;
-if (imagesMain.length !== 9 || imagesAlt.length !== 9) {
-  Alert.alert("Error", "Jumlah gambar utama dan alternatif harus tepat 9.");
-} else if (!isUnique(imagesMain) || !isUnique(imagesAlt)) {
-  console.warn('Ada gambar yang duplikat di imagesMain atau imagesAlt');
-}
+const isValidImageArray = (arr: any[]) => Array.isArray(arr) && arr.length === 9 && new Set(arr).size === 9;
 
-type ImgState = {
+type ImgCellState = {
   scale: number;
   isAlt: boolean;
   scaleAnim: Animated.Value;
 };
 
 export default function App() {
-  const [imageStates, setImageStates] = React.useState<ImgState[]>(
-    Array(9).fill(0).map(() => ({
+  const [imageStates, setImageStates] = React.useState<ImgCellState[]>(
+    Array(9).fill(null).map(() => ({
       scale: 1,
       isAlt: false,
       scaleAnim: new Animated.Value(1),
     }))
   );
 
-  // ✅ handleImagePress lengkap
   const handleImagePress = (index: number) => {
     setImageStates(prev =>
-      prev.map((item, i) => {
-        if (i !== index) return item;
+      prev.map((state, i) => {
+        if (i !== index) return state;
 
-        // Jika sedang alternatif dan sudah 2x, reset
-        if (item.isAlt && item.scale === 2) {
-          Animated.spring(item.scaleAnim, { toValue: 1, useNativeDriver: true }).start();
-          return { ...item, scale: 1, isAlt: false };
+        // Reset jika sudah alternatif dan scale 2
+        if (state.isAlt && state.scale === 2) {
+          Animated.spring(state.scaleAnim, { toValue: 1, useNativeDriver: true }).start();
+          return { ...state, scale: 1, isAlt: false };
         }
 
-        // Tambah skala 0.2, maksimal 2
-        let nextScale = +(item.scale + 0.2).toFixed(2);
+        // Tingkatkan scale per klik hingga 2
+        let nextScale = +(state.scale + 0.2).toFixed(1);
         if (nextScale > 2) nextScale = 2;
 
-        // Jika mencapai 2x, ganti ke alternatif
-        const nextIsAlt = nextScale === 2 ? true : item.isAlt;
+        const nextIsAlt = nextScale === 2 ? true : state.isAlt;
 
-        Animated.spring(item.scaleAnim, { toValue: nextScale, useNativeDriver: true }).start();
+        Animated.spring(state.scaleAnim, { toValue: nextScale, useNativeDriver: true }).start();
 
-        return { ...item, scale: nextScale, isAlt: nextIsAlt };
+        return {
+          ...state,
+          scale: nextScale,
+          isAlt: nextIsAlt,
+        };
       })
     );
   };
 
+  const isReady = isValidImageArray(imagesMain) && isValidImageArray(imagesAlt);
+
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
       <View style={styles.container}>
-        <View style={[styles.grid, { width: GRID_WIDTH, height: GRID_WIDTH }]}>
-          {imageStates.map((state, idx) => (
-            <TouchableOpacity
-              key={idx}
-              style={[styles.cell, { width: CELL_SIZE, aspectRatio: 1 }]}
-              onPress={() => handleImagePress(idx)}
-              activeOpacity={0.8}
-            >
-              <Animated.Image
-                source={state.isAlt ? imagesAlt[idx] : imagesMain[idx]}
-                style={[
-                  styles.image,
-                  {
-                    transform: [{ scale: state.scaleAnim }]
-                  }
-                ]}
-                resizeMode="cover"
-              />
-            </TouchableOpacity>
-          ))}
-        </View>
+        {isReady ? (
+          <View style={[styles.grid, { width: GRID_WIDTH, height: GRID_WIDTH }]}>
+            {imageStates.map((state, index) => (
+              <TouchableOpacity
+                key={index}
+                onPress={() => handleImagePress(index)}
+                activeOpacity={0.8}
+                style={[styles.cell, { width: CELL_SIZE, aspectRatio: 1 }]}
+              >
+                <Animated.Image
+                  source={state.isAlt ? imagesAlt[index] : imagesMain[index]}
+                  style={[
+                    styles.image,
+                    { transform: [{ scale: state.scaleAnim }] },
+                  ]}
+                  resizeMode="cover"
+                />
+              </TouchableOpacity>
+            ))}
+          </View>
+        ) : (
+          <Text style={styles.errorText}>
+            Gambar tidak valid: pastikan terdapat 9 gambar utama dan 9 alternatif yang unik.
+          </Text>
+        )}
       </View>
     </ScrollView>
   );
 }
 
-// ✅ Semua sel dijamin square & konsisten
 const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
@@ -122,29 +123,34 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'center',
-    backgroundColor: '#f0f0f0',
     paddingVertical: 20,
+    backgroundColor: '#f0f0f0',
   },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    backgroundColor: '#fff',
     borderRadius: 12,
+    backgroundColor: '#fff',
     overflow: 'hidden',
-    alignContent: 'flex-start',
   },
   cell: {
     justifyContent: 'center',
     alignItems: 'center',
-    borderColor: '#e0e0e0',
+    borderColor: '#ccc',
     borderWidth: 1,
-    borderRadius: 10,
-    backgroundColor: '#fff',
+    borderRadius: 8,
     overflow: 'hidden',
+    backgroundColor: '#fff',
   },
   image: {
     width: '100%',
     height: '100%',
-    borderRadius: 10,
+    borderRadius: 8,
+  },
+  errorText: {
+    padding: 20,
+    fontSize: 16,
+    color: 'red',
+    textAlign: 'center',
   },
 });
