@@ -43,6 +43,7 @@ const imagesAlt = [
   require('../assets/images/18.jpeg'),
 ];
 
+// Validasi array gambar
 const isValidImageArray = (arr: any[]) =>
   Array.isArray(arr) && arr.length === 9 && new Set(arr).size === 9;
 
@@ -53,6 +54,7 @@ type ImgCellState = {
 };
 
 export default function App() {
+  // Inisialisasi state individual untuk setiap sel gambar
   const [imageStates, setImageStates] = React.useState<ImgCellState[]>(
     Array(9)
       .fill(null)
@@ -63,21 +65,25 @@ export default function App() {
       }))
   );
 
+  // Fungsi untuk menangani klik gambar
   const handleImagePress = (index: number) => {
+    if (!isValidImageArray(imagesMain) || !isValidImageArray(imagesAlt)) return;
+
     setImageStates(prev =>
       prev.map((state, i) => {
         if (i !== index) return state;
 
-        // Jika sudah alternatif dan skala = 2, reset
+        // Jika sudah alternatif dan skala maksimum, reset
         if (state.isAlt && state.scale === 2) {
-          Animated.spring(state.scaleAnim, { toValue: 1, useNativeDriver: true }).start();
+          Animated.spring(state.scaleAnim, {
+            toValue: 1,
+            useNativeDriver: true,
+          }).start();
           return { ...state, scale: 1, isAlt: false };
         }
 
-        // Tambah skala hingga maksimal 2.0
-        let nextScale = +(state.scale + 0.2).toFixed(1);
-        if (nextScale > 2) nextScale = 2;
-
+        // Tingkatkan skala bertahap (+0.2), maksimal 2.0
+        const nextScale = Math.min(+(state.scale + 0.2).toFixed(1), 2);
         const nextIsAlt = nextScale === 2 ? true : state.isAlt;
 
         Animated.spring(state.scaleAnim, {
@@ -105,16 +111,14 @@ export default function App() {
               <TouchableOpacity
                 key={index}
                 onPress={() => handleImagePress(index)}
-                activeOpacity={0.8}
+                activeOpacity={0.85}
                 style={[styles.cell, { width: CELL_SIZE, aspectRatio: 1 }]}
               >
                 <Animated.Image
                   source={state.isAlt ? imagesAlt[index] : imagesMain[index]}
                   style={[
                     styles.image,
-                    {
-                      transform: [{ scale: state.scaleAnim }],
-                    },
+                    { transform: [{ scale: state.scaleAnim }] },
                   ]}
                   resizeMode="cover"
                 />
@@ -123,7 +127,7 @@ export default function App() {
           </View>
         ) : (
           <Text style={styles.errorText}>
-            Gambar tidak valid: Pastikan ada 9 gambar utama & 9 alternatif yang unik.
+            Gambar tidak valid. Pastikan 9 gambar utama dan 9 gambar alternatif unik tersedia.
           </Text>
         )}
       </View>
