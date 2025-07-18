@@ -31,7 +31,7 @@ const images = [
 ];
 
 const MAX_SCALE = 2.0;
-const SCALE_INCREMENT = 0.2;
+const SCALE_STEP = 0.2;
 
 const ImageGridCell = ({ imagePair, scaleAnim, isAlt, onPress, index }) => (
   <TouchableOpacity
@@ -63,16 +63,17 @@ export default function Index() {
 
   const onImagePress = useCallback((index) => {
     setImageStates((prevStates) => {
-      const newStates = [...prevStates];
-      const current = newStates[index];
-      let nextScale = +(current.scale + SCALE_INCREMENT).toFixed(1);
+      const updatedStates = [...prevStates];
+      const current = updatedStates[index];
+
+      let nextScale = +(current.scale + SCALE_STEP).toFixed(1);
       let nextIsAlt = current.isAlt;
 
       if (nextScale > MAX_SCALE) {
         nextScale = 1.0;
-        nextIsAlt = false; // reset to main image
+        nextIsAlt = false; // reset to main
       } else if (nextScale === MAX_SCALE) {
-        nextIsAlt = true; // switch to alternate image at max scale
+        nextIsAlt = true; // switch to alt
       }
 
       Animated.spring(current.scaleAnim, {
@@ -80,14 +81,13 @@ export default function Index() {
         useNativeDriver: true,
       }).start();
 
-      newStates[index] = {
-        ...current,
+      updatedStates[index] = {
         scale: nextScale,
         isAlt: nextIsAlt,
         scaleAnim: current.scaleAnim,
       };
 
-      return newStates;
+      return updatedStates;
     });
   }, []);
 
