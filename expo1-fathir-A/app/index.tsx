@@ -8,15 +8,8 @@ import {
 } from 'react-native';
 
 const { width } = Dimensions.get('window');
-const GRID_COLUMNS = 3;
-const GRID_PADDING = 16;
-const GRID_SPACING = 4;
-const CELL_SIZE =
-  (width - GRID_PADDING * 2 - GRID_SPACING * (GRID_COLUMNS - 1)) /
-  GRID_COLUMNS;
-
-const MAX_SCALE = 2.0;
-const SCALE_STEP = 0.2;
+const CELL_SIZE = width * 0.25; // 25% dari lebar layar
+const GRID_SPACING = 6;
 
 const images = [
   { main: require('../assets/images/1.jpeg'), alt: require('../assets/images/2.jpeg') },
@@ -30,10 +23,10 @@ const images = [
   { main: require('../assets/images/17.jpeg'), alt: require('../assets/images/18.jpeg') },
 ];
 
-const ImageGridCell = ({ imagePair, scaleAnim, isAlt, onPress, index }) => (
+const ImageGridCell = ({ imagePair, scaleAnim, isAlt, onPress, index, disabled }) => (
   <TouchableOpacity
-    onPress={() => onPress(index)}
-    activeOpacity={0.85}
+    onPress={() => !disabled && onPress(index)}
+    activeOpacity={disabled ? 1 : 0.85}
     style={[styles.cell, { width: CELL_SIZE, height: CELL_SIZE }]}
   >
     <Animated.Image
@@ -55,6 +48,8 @@ export default function Index() {
       scale: 1.0,
       scaleAnim: new Animated.Value(1.0),
       isAlt: false,
+      clickCount: 0,
+      locked: false,
     }))
   );
 
@@ -63,23 +58,32 @@ export default function Index() {
       const newStates = [...prevStates];
       const current = newStates[index];
 
-      if (current.scale >= MAX_SCALE) {
-        // Sudah mencapai maksimal, tidak bertambah lagi
-        return prevStates;
+      if (current.locked) return prevStates;
+
+      let nextClickCount = current.clickCount + 1;
+      let nextScale = current.scale;
+      let nextIsAlt = current.isAlt;
+      let nextLocked = false;
+
+      if (nextClickCount === 1) {
+        nextScale = 1.2;
+      } else if (nextClickCount === 2) {
+        nextScale = 1.2;
+        nextIsAlt = true;
+        nextLocked = true;
       }
 
-      const newScale = +(current.scale + SCALE_STEP).toFixed(1);
-      const newIsAlt = newScale >= MAX_SCALE ? true : current.isAlt;
-
       Animated.spring(current.scaleAnim, {
-        toValue: newScale,
+        toValue: nextScale,
         useNativeDriver: true,
       }).start();
 
       newStates[index] = {
-        scale: newScale,
-        scaleAnim: current.scaleAnim,
-        isAlt: newIsAlt,
+        ...current,
+        scale: nextScale,
+        isAlt: nextIsAlt,
+        clickCount: nextClickCount,
+        locked: nextLocked,
       };
 
       return newStates;
@@ -97,6 +101,7 @@ export default function Index() {
             onPress={onImagePress}
             isAlt={imageStates[idx].isAlt}
             scaleAnim={imageStates[idx].scaleAnim}
+            disabled={imageStates[idx].locked}
           />
         ))}
       </View>
@@ -107,23 +112,22 @@ export default function Index() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: GRID_PADDING,
+    paddingVertical: 20,
     backgroundColor: '#f9f9f9',
-    justifyContent: 'center',
     alignItems: 'center',
   },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    width: '100%',
-    maxWidth: width - GRID_PADDING * 2,
+    justifyContent: 'center',
+    columnGap: GRID_SPACING,
+    rowGap: GRID_SPACING,
+    paddingHorizontal: 10,
   },
   cell: {
-    marginBottom: GRID_SPACING,
     borderRadius: 6,
     overflow: 'hidden',
-    backgroundColor: '#ddd',
+    backgroundColor: '#ccc',
   },
   image: {
     width: '100%',
