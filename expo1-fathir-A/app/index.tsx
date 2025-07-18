@@ -1,8 +1,3 @@
-// NAMA : AHMAD FATHIR
-// NIM  : 105841102922
-// KELAS: 6A
-// TUGAS2 LAB AKB
-
 import React, { useState, useCallback } from 'react';
 import {
   StyleSheet,
@@ -63,28 +58,28 @@ export default function Index() {
     }))
   );
 
-  const onImagePress = useCallback((index: number) => {
+  const onImagePress = useCallback((index) => {
     setImageStates((prevStates) => {
       const newStates = [...prevStates];
       const current = newStates[index];
 
-      // Cegah penambahan jika sudah mencapai 2.0
       if (current.scale >= MAX_SCALE) {
+        // Sudah mencapai maksimal, tidak bertambah lagi
         return prevStates;
       }
 
-      const nextScale = +(current.scale + SCALE_STEP).toFixed(1);
-      const switchToAlt = nextScale >= MAX_SCALE;
+      const newScale = +(current.scale + SCALE_STEP).toFixed(1);
+      const newIsAlt = newScale >= MAX_SCALE ? true : current.isAlt;
 
       Animated.spring(current.scaleAnim, {
-        toValue: nextScale,
+        toValue: newScale,
         useNativeDriver: true,
       }).start();
 
       newStates[index] = {
-        ...current,
-        scale: nextScale,
-        isAlt: switchToAlt,
+        scale: newScale,
+        scaleAnim: current.scaleAnim,
+        isAlt: newIsAlt,
       };
 
       return newStates;
