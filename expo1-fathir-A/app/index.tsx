@@ -67,14 +67,19 @@ export default function Index() {
     setImageStates((prevStates) => {
       const updatedStates = [...prevStates];
       const current = updatedStates[index];
-      let newScale = +(current.scale + SCALE_STEP).toFixed(1);
-      let switchToAlt = current.isAlt;
 
-      if (newScale > MAX_SCALE) {
-        newScale = 1.0;
-        switchToAlt = false; // reset image
-      } else if (newScale === MAX_SCALE) {
-        switchToAlt = true; // switch to alt at max scale
+      // Jika sudah mencapai 2.0, hentikan penambahan
+      if (current.scale >= MAX_SCALE) {
+        return prevStates; // tidak update state
+      }
+
+      let newScale = +(current.scale + SCALE_STEP).toFixed(1);
+      let nextIsAlt = current.isAlt;
+
+      // Jika akan mencapai 2.0, ubah ke gambar alternatif
+      if (newScale >= MAX_SCALE) {
+        newScale = MAX_SCALE;
+        nextIsAlt = true;
       }
 
       Animated.spring(current.scaleAnim, {
@@ -85,7 +90,7 @@ export default function Index() {
       updatedStates[index] = {
         ...current,
         scale: newScale,
-        isAlt: switchToAlt,
+        isAlt: nextIsAlt,
       };
 
       return updatedStates;
