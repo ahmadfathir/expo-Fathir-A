@@ -43,6 +43,7 @@ const imagesAlt = [
   require('../assets/images/18.jpeg'),
 ];
 
+// Validasi gambar
 const isValidImageArray = (arr: any[]) =>
   Array.isArray(arr) && arr.length === 9 && new Set(arr).size === 9;
 
@@ -63,41 +64,33 @@ export default function App() {
       }))
   );
 
+  // ✅ Fungsi handleImagePress selesai 100%
   const handleImagePress = (index: number) => {
     if (!isValidImageArray(imagesMain) || !isValidImageArray(imagesAlt)) return;
 
-    setImageStates(prev =>
-      prev.map((state, i) => {
+    setImageStates(prevStates =>
+      prevStates.map((state, i) => {
         if (i !== index) return state;
 
-        // Jika sedang alternatif dan scale 2, reset ke awal
+        let newScale = +(state.scale + 0.2).toFixed(1);
+
+        // Jika sudah alternatif dan skala 2, reset ke awal
         if (state.isAlt && state.scale === 2) {
-          Animated.spring(state.scaleAnim, {
-            toValue: 1,
-            useNativeDriver: true,
-          }).start();
-          return {
-            ...state,
-            scale: 1,
-            isAlt: false,
-          };
+          Animated.spring(state.scaleAnim, { toValue: 1, useNativeDriver: true }).start();
+          return { ...state, scale: 1, isAlt: false };
         }
 
-        // Pertama kali klik, naik ke 1.2
-        let nextScale = +(state.scale + 0.2).toFixed(1);
-        if (nextScale > 2) nextScale = 2;
+        // Jika belum maksimal, terus naikkan sampai 2
+        if (newScale > 2) newScale = 2;
 
-        const nextIsAlt = nextScale === 2 ? true : state.isAlt;
+        const newIsAlt = newScale === 2 ? true : state.isAlt;
 
-        Animated.spring(state.scaleAnim, {
-          toValue: nextScale,
-          useNativeDriver: true,
-        }).start();
+        Animated.spring(state.scaleAnim, { toValue: newScale, useNativeDriver: true }).start();
 
         return {
           ...state,
-          scale: nextScale,
-          isAlt: nextIsAlt,
+          scale: newScale,
+          isAlt: newIsAlt,
         };
       })
     );
