@@ -1,8 +1,3 @@
-// NAMA : AHMAD FATHIR
-// NIM  : 105841102922
-// KELAS: 6A
-// TUGAS2 LAB AKB
-
 import React, { useState, useCallback } from 'react';
 import {
   StyleSheet,
@@ -18,6 +13,9 @@ const GRID_PADDING = 16;
 const GRID_SPACING = 4;
 const CELL_SIZE = (width - GRID_PADDING * 2 - GRID_SPACING * (GRID_COLUMNS - 1)) / GRID_COLUMNS;
 
+const MAX_SCALE = 2.0;
+const SCALE_STEP = 0.2;
+
 const images = [
   { main: require('../assets/images/1.jpeg'), alt: require('../assets/images/2.jpeg') },
   { main: require('../assets/images/3.jpeg'), alt: require('../assets/images/4.jpeg') },
@@ -29,9 +27,6 @@ const images = [
   { main: require('../assets/images/15.jpeg'), alt: require('../assets/images/16.jpeg') },
   { main: require('../assets/images/17.jpeg'), alt: require('../assets/images/18.jpeg') },
 ];
-
-const MAX_SCALE = 2.0;
-const SCALE_STEP = 0.2;
 
 const ImageGridCell = ({ imagePair, scaleAnim, isAlt, onPress, index }) => (
   <TouchableOpacity
@@ -69,13 +64,16 @@ export default function Index() {
       let nextScale = +(current.scale + SCALE_STEP).toFixed(1);
       let nextIsAlt = current.isAlt;
 
-      if (nextScale > MAX_SCALE) {
+      // Cegah skala melebihi MAX_SCALE
+      if (current.scale >= MAX_SCALE) {
         nextScale = 1.0;
-        nextIsAlt = false; // reset to main
-      } else if (nextScale === MAX_SCALE) {
-        nextIsAlt = true; // switch to alt
+        nextIsAlt = false;
+      } else if (nextScale >= MAX_SCALE) {
+        nextScale = MAX_SCALE;
+        nextIsAlt = true;
       }
 
+      // Update animasi
       Animated.spring(current.scaleAnim, {
         toValue: nextScale,
         useNativeDriver: true,
