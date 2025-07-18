@@ -1,174 +1,111 @@
-// NAMA : AHMAD FATHIR
-// NIM  : 105841102922
-// KELAS: 6A
-// TUGAS2 LAB AKB
+import React, { useState } from 'react';
+import { StyleSheet, View, Image, TouchableOpacity } from 'react-native';
 
-import React from 'react';
-import {
-  StyleSheet,
-  View,
-  TouchableOpacity,
-  Animated,
-  Dimensions,
-  ScrollView,
-  Text,
-} from 'react-native';
-
-const { width } = Dimensions.get('window');
-const GRID_SIZE = 3;
-const GRID_WIDTH = width * 0.9;
-const CELL_SIZE = Math.floor(GRID_WIDTH / GRID_SIZE);
-
-const imagesMain = [
-  require('../assets/images/1.jpeg'),
-  require('../assets/images/2.jpeg'),
-  require('../assets/images/3.jpeg'),
-  require('../assets/images/4.jpeg'),
-  require('../assets/images/5.jpeg'),
-  require('../assets/images/6.jpeg'),
-  require('../assets/images/7.jpeg'),
-  require('../assets/images/8.jpeg'),
-  require('../assets/images/9.jpeg'),
+const imageData = [
+  {
+    main: "https://images.alphacoders.com/134/1341120.png",
+    alternate: "https://images5.alphacoders.com/462/462370.jpg"
+  },
+  {
+    main: "https://images5.alphacoders.com/133/1330264.png",
+    alternate: "https://images4.alphacoders.com/417/41774.jpg"
+  },
+  {
+    main: "https://images.alphacoders.com/824/824838.jpg",
+    alternate: "https://images.alphacoders.com/773/773531.jpg"
+  },
+  {
+    main: "https://images4.alphacoders.com/135/1358294.jpeg",
+    alternate: "https://images3.alphacoders.com/121/121797.jpg"
+  },
+  {
+    main: "https://images3.alphacoders.com/133/1330268.png",
+    alternate: "https://images2.alphacoders.com/437/437349.jpg"
+  },
+  {
+    main: "https://images2.alphacoders.com/634/6340.jpg",
+    alternate: "https://images6.alphacoders.com/681/681657.jpg"
+  },
+  {
+    main: "https://images.alphacoders.com/135/1357436.jpeg",
+    alternate: "https://images.alphacoders.com/824/824838.jpg"
+  },
+  {
+    main: "https://images.alphacoders.com/554/55473.jpg",
+    alternate: "https://images4.alphacoders.com/242/242474.jpg"
+  },
+  {
+    main: "https://images7.alphacoders.com/456/456120.jpg",
+    alternate: "https://images6.alphacoders.com/407/407482.jpg"
+  }
 ];
 
-const imagesAlt = [
-  require('../assets/images/10.jpeg'),
-  require('../assets/images/11.jpeg'),
-  require('../assets/images/12.jpeg'),
-  require('../assets/images/13.jpeg'),
-  require('../assets/images/14.jpeg'),
-  require('../assets/images/15.jpeg'),
-  require('../assets/images/16.jpeg'),
-  require('../assets/images/17.jpeg'),
-  require('../assets/images/18.jpeg'),
-];
+export default function Index() {
+  const [clickCounts, setClickCounts] = useState(Array(9).fill(0));
 
-// Validasi gambar
-const isValidImageArray = (arr: any[]) =>
-  Array.isArray(arr) && arr.length === 9 && new Set(arr).size === 9;
-
-type ImgCellState = {
-  scale: number;
-  isAlt: boolean;
-  scaleAnim: Animated.Value;
-};
-
-export default function App() {
-  const [imageStates, setImageStates] = React.useState<ImgCellState[]>(
-    Array(9)
-      .fill(null)
-      .map(() => ({
-        scale: 1,
-        isAlt: false,
-        scaleAnim: new Animated.Value(1),
-      }))
-  );
-
-  // ✅ Fungsi handleImagePress selesai 100%
-  const handleImagePress = (index: number) => {
-    if (!isValidImageArray(imagesMain) || !isValidImageArray(imagesAlt)) return;
-
-    setImageStates(prevStates =>
-      prevStates.map((state, i) => {
-        if (i !== index) return state;
-
-        let newScale = +(state.scale + 0.2).toFixed(1);
-
-        // Jika sudah alternatif dan skala 2, reset ke awal
-        if (state.isAlt && state.scale === 2) {
-          Animated.spring(state.scaleAnim, { toValue: 1, useNativeDriver: true }).start();
-          return { ...state, scale: 1, isAlt: false };
-        }
-
-        // Jika belum maksimal, terus naikkan sampai 2
-        if (newScale > 2) newScale = 2;
-
-        const newIsAlt = newScale === 2 ? true : state.isAlt;
-
-        Animated.spring(state.scaleAnim, { toValue: newScale, useNativeDriver: true }).start();
-
-        return {
-          ...state,
-          scale: newScale,
-          isAlt: newIsAlt,
-        };
-      })
-    );
+  const handlePress = (index) => {
+    if (clickCounts[index] < 2) {
+      const newCounts = [...clickCounts];
+      newCounts[index] += 1;
+      setClickCounts(newCounts);
+    }
   };
 
-  const isReady = isValidImageArray(imagesMain) && isValidImageArray(imagesAlt);
+  const getScale = (count) => {
+    if (count === 1) return 1.2;
+    if (count === 2) return 2.0;
+    return 1;
+  };
 
   return (
-    <ScrollView contentContainerStyle={styles.scrollContainer}>
-      <View style={styles.container}>
-        {isReady ? (
-          <View style={[styles.grid, { width: GRID_WIDTH, height: GRID_WIDTH }]}>
-            {imageStates.map((state, index) => (
-              <TouchableOpacity
-                key={index}
-                onPress={() => handleImagePress(index)}
-                activeOpacity={0.85}
-                style={[styles.cell, { width: CELL_SIZE, aspectRatio: 1 }]}
-              >
-                <Animated.Image
-                  source={state.isAlt ? imagesAlt[index] : imagesMain[index]}
-                  style={[
-                    styles.image,
-                    {
-                      transform: [{ scale: state.scaleAnim }],
-                    },
-                  ]}
-                  resizeMode="cover"
-                />
-              </TouchableOpacity>
-            ))}
-          </View>
-        ) : (
-          <Text style={styles.errorText}>
-            Gambar tidak valid: Pastikan terdapat 9 gambar utama dan 9 alternatif yang unik.
-          </Text>
-        )}
+    <View style={styles.container}>
+      {/* Grid gambar 3x3 */}
+      <View style={styles.gridContainer}>
+        {imageData.map((imageSet, index) => (
+          <TouchableOpacity
+            key={index}
+            onPress={() => handlePress(index)}
+            activeOpacity={0.8}
+          >
+            <Image
+              source={{
+                uri: clickCounts[index] % 2 === 1
+                  ? imageSet.alternate
+                  : imageSet.main
+              }}
+              style={[
+                styles.image,
+                {
+                  transform: [{ scale: getScale(clickCounts[index]) }]
+                }
+              ]}
+            />
+          </TouchableOpacity>
+        ))}
       </View>
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  scrollContainer: {
-    flexGrow: 1,
-    justifyContent: 'center',
-  },
   container: {
     flex: 1,
-    alignItems: 'center',
-    paddingVertical: 20,
-    backgroundColor: '#f0f0f0',
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  cell: {
     justifyContent: 'center',
     alignItems: 'center',
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 8,
-    overflow: 'hidden',
-    backgroundColor: '#fff',
+    backgroundColor: '#f0f0f0',
+    padding: 16
+  },
+  gridContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    width: 306,  // (100 + 2) * 3
+    justifyContent: 'center'
   },
   image: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 8,
-  },
-  errorText: {
-    padding: 20,
-    fontSize: 16,
-    color: 'red',
-    textAlign: 'center',
-  },
+    width: 100,
+    height: 100,
+    margin: 1,
+    backgroundColor: '#ddd',
+    borderRadius: 4
+  }
 });
