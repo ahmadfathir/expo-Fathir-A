@@ -63,37 +63,31 @@ export default function Index() {
     }))
   );
 
-  const onImagePress = useCallback((index) => {
+  const onImagePress = useCallback((index: number) => {
     setImageStates((prevStates) => {
-      const updatedStates = [...prevStates];
-      const current = updatedStates[index];
+      const newStates = [...prevStates];
+      const current = newStates[index];
 
-      // Jika sudah mencapai 2.0, hentikan penambahan
+      // Cegah penambahan jika sudah mencapai 2.0
       if (current.scale >= MAX_SCALE) {
-        return prevStates; // tidak update state
+        return prevStates;
       }
 
-      let newScale = +(current.scale + SCALE_STEP).toFixed(1);
-      let nextIsAlt = current.isAlt;
-
-      // Jika akan mencapai 2.0, ubah ke gambar alternatif
-      if (newScale >= MAX_SCALE) {
-        newScale = MAX_SCALE;
-        nextIsAlt = true;
-      }
+      const nextScale = +(current.scale + SCALE_STEP).toFixed(1);
+      const switchToAlt = nextScale >= MAX_SCALE;
 
       Animated.spring(current.scaleAnim, {
-        toValue: newScale,
+        toValue: nextScale,
         useNativeDriver: true,
       }).start();
 
-      updatedStates[index] = {
+      newStates[index] = {
         ...current,
-        scale: newScale,
-        isAlt: nextIsAlt,
+        scale: nextScale,
+        isAlt: switchToAlt,
       };
 
-      return updatedStates;
+      return newStates;
     });
   }, []);
 
