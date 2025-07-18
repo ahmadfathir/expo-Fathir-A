@@ -1,3 +1,8 @@
+// NAMA : AHMAD FATHIR
+// NIM  : 105841102922
+// KELAS: 6A
+// TUGAS2 LAB AKB
+
 import React, { useState, useCallback } from 'react';
 import {
   StyleSheet,
@@ -11,7 +16,9 @@ const { width } = Dimensions.get('window');
 const GRID_COLUMNS = 3;
 const GRID_PADDING = 16;
 const GRID_SPACING = 4;
-const CELL_SIZE = (width - GRID_PADDING * 2 - GRID_SPACING * (GRID_COLUMNS - 1)) / GRID_COLUMNS;
+const CELL_SIZE =
+  (width - GRID_PADDING * 2 - GRID_SPACING * (GRID_COLUMNS - 1)) /
+  GRID_COLUMNS;
 
 const MAX_SCALE = 2.0;
 const SCALE_STEP = 0.2;
@@ -50,9 +57,9 @@ const ImageGridCell = ({ imagePair, scaleAnim, isAlt, onPress, index }) => (
 export default function Index() {
   const [imageStates, setImageStates] = useState(
     images.map(() => ({
-      isAlt: false,
       scale: 1.0,
       scaleAnim: new Animated.Value(1.0),
+      isAlt: false,
     }))
   );
 
@@ -60,29 +67,25 @@ export default function Index() {
     setImageStates((prevStates) => {
       const updatedStates = [...prevStates];
       const current = updatedStates[index];
+      let newScale = +(current.scale + SCALE_STEP).toFixed(1);
+      let switchToAlt = current.isAlt;
 
-      let nextScale = +(current.scale + SCALE_STEP).toFixed(1);
-      let nextIsAlt = current.isAlt;
-
-      // Cegah skala melebihi MAX_SCALE
-      if (current.scale >= MAX_SCALE) {
-        nextScale = 1.0;
-        nextIsAlt = false;
-      } else if (nextScale >= MAX_SCALE) {
-        nextScale = MAX_SCALE;
-        nextIsAlt = true;
+      if (newScale > MAX_SCALE) {
+        newScale = 1.0;
+        switchToAlt = false; // reset image
+      } else if (newScale === MAX_SCALE) {
+        switchToAlt = true; // switch to alt at max scale
       }
 
-      // Update animasi
       Animated.spring(current.scaleAnim, {
-        toValue: nextScale,
+        toValue: newScale,
         useNativeDriver: true,
       }).start();
 
       updatedStates[index] = {
-        scale: nextScale,
-        isAlt: nextIsAlt,
-        scaleAnim: current.scaleAnim,
+        ...current,
+        scale: newScale,
+        isAlt: switchToAlt,
       };
 
       return updatedStates;
