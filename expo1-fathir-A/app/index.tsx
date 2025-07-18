@@ -4,7 +4,13 @@
 // TUGAS2 LAB AKB
 
 import React, { useState, useCallback } from 'react';
-import { StyleSheet, View, Image, TouchableOpacity, Dimensions } from 'react-native';
+import {
+  StyleSheet,
+  View,
+  Animated,
+  TouchableOpacity,
+  Dimensions,
+} from 'react-native';
 
 const { width } = Dimensions.get('window');
 const GRID_COLUMNS = 3;
@@ -24,33 +30,64 @@ const images = [
   { main: require('../assets/images/17.jpeg'), alt: require('../assets/images/18.jpeg') },
 ];
 
-const ImageGridCell = ({ imagePair, index, count, onPress }) => {
-  const scale = count === 1 ? 1.2 : count === 2 ? 2.0 : 1;
-  const displayedImage = count % 2 === 1 ? imagePair.alt : imagePair.main;
+const MAX_SCALE = 2.0;
+const SCALE_INCREMENT = 0.2;
 
-  return (
-    <TouchableOpacity
-      activeOpacity={0.85}
-      onPress={() => onPress(index)}
-      style={[styles.cell, { width: CELL_SIZE, height: CELL_SIZE }]}
-    >
-      <Image
-        source={displayedImage}
-        style={[styles.image, { transform: [{ scale }] }]}
-        resizeMode="cover"
-      />
-    </TouchableOpacity>
-  );
-};
+const ImageGridCell = ({ imagePair, scaleAnim, isAlt, onPress, index }) => (
+  <TouchableOpacity
+    onPress={() => onPress(index)}
+    activeOpacity={0.85}
+    style={[styles.cell, { width: CELL_SIZE, height: CELL_SIZE }]}
+  >
+    <Animated.Image
+      source={isAlt ? imagePair.alt : imagePair.main}
+      style={[
+        styles.image,
+        {
+          transform: [{ scale: scaleAnim }],
+        },
+      ]}
+      resizeMode="cover"
+    />
+  </TouchableOpacity>
+);
 
 export default function Index() {
-  const [clicks, setClicks] = useState(Array(images.length).fill(0));
+  const [imageStates, setImageStates] = useState(
+    images.map(() => ({
+      isAlt: false,
+      scale: 1.0,
+      scaleAnim: new Animated.Value(1.0),
+    }))
+  );
 
   const onImagePress = useCallback((index) => {
-    setClicks((prev) => {
-      const updated = [...prev];
-      updated[index] = updated[index] >= 2 ? 0 : updated[index] + 1;
-      return updated;
+    setImageStates((prevStates) => {
+      const newStates = [...prevStates];
+      const current = newStates[index];
+      let nextScale = +(current.scale + SCALE_INCREMENT).toFixed(1);
+      let nextIsAlt = current.isAlt;
+
+      if (nextScale > MAX_SCALE) {
+        nextScale = 1.0;
+        nextIsAlt = false; // reset to main image
+      } else if (nextScale === MAX_SCALE) {
+        nextIsAlt = true; // switch to alternate image at max scale
+      }
+
+      Animated.spring(current.scaleAnim, {
+        toValue: nextScale,
+        useNativeDriver: true,
+      }).start();
+
+      newStates[index] = {
+        ...current,
+        scale: nextScale,
+        isAlt: nextIsAlt,
+        scaleAnim: current.scaleAnim,
+      };
+
+      return newStates;
     });
   }, []);
 
@@ -62,8 +99,9 @@ export default function Index() {
             key={idx}
             imagePair={img}
             index={idx}
-            count={clicks[idx]}
             onPress={onImagePress}
+            isAlt={imageStates[idx].isAlt}
+            scaleAnim={imageStates[idx].scaleAnim}
           />
         ))}
       </View>
